@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "X DOM Collector (MVP)",
+  "version": "0.2.1",
+  "description": "Captures X/Twitter posts from the DOM, stores locally (IndexedDB), and provides a dashboard + JSONL export + basic sentiment.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "X DOM Collector"
+  }
+}

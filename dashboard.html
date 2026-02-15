@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>X DOM Collector Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <header>
+    <h1>X DOM Collector (MVP)</h1>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Captures per day</h2>
+      <div class="controls">
+        <label>Days <input id="daysCaptures" type="number" value="30" min="1" max="365" /></label>
+        <button id="refreshCaptures">Refresh</button>
+      </div>
+      <pre id="capturesOut">[]</pre>
+    </div>
+
+    <div class="card">
+      <h2>Top authors by captures</h2>
+      <div class="controls">
+        <label>Days <input id="daysAuthors" type="number" value="30" min="1" max="365" /></label>
+        <label>Limit <input id="limitAuthors" type="number" value="20" min="1" max="200" /></label>
+        <button id="refreshAuthors">Refresh</button>
+      </div>
+      <pre id="authorsOut">[]</pre>
+    </div>
+
+    <div class="card full">
+      <h2>Home feed breakdown</h2>
+      <div class="controls">
+        <label>Days <input id="daysFeed" type="number" value="30" min="1" max="365" /></label>
+        <button id="refreshFeed">Refresh</button>
+      </div>
+      <pre id="feedOut">{}</pre>
+      <p class="hint">total = every time it appeared; unique_session = first time per page-load session.</p>
+    </div>
+
+    <div class="card full">
+      <h2>Sentiment summary</h2>
+      <div class="controls">
+        <label>Days <input id="daysSentiment" type="number" value="30" min="1" max="365" /></label>
+        <button id="refreshSentiment">Refresh</button>
+      </div>
+      <pre id="sentimentOut">{}</pre>
+      <p class="hint">Deterministic keyword scoring (MVP). Not context-aware.</p>
+    </div>
+
+    <div class="card full">
+      <h2>Posts by author</h2>
+      <div class="controls">
+        <label>Author handle (exact) <input id="authorHandle" type="text" placeholder="@somehandle" /></label>
+        <label>Limit <input id="limitPosts" type="number" value="50" min="1" max="500" /></label>
+        <button id="loadPosts">Load</button>
+      </div>
+      <pre id="postsOut">Enter an author handle like @somehandle</pre>
+    </div>
+
+    <div class="card full">
+      <h2>Export JSONL</h2>
+      <div class="controls">
+        <label>Days <input id="daysExport" type="number" value="30" min="1" max="365" /></label>
+        <button id="exportBtn">Export</button>
+      </div>
+      <p class="hint">Exports one JSON object per line (post + capture counts + sentiment fields if present).</p>
+    </div>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
