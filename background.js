@@ -27,15 +27,45 @@ async function upsertBatch(batch) {
 
   const db = await openDb();
 
+  function upsertUser(usersStore, handle, nowIso) {
+    if (!handle) return;
+
+    const req = usersStore.get(handle);
+    req.onsuccess = () => {
+      const existing = req.result;
+      if (!existing) {
+        usersStore.put({
+          handle,
+          first_seen_at: nowIso,
+          last_seen_at: nowIso,
+          seen_count: 1
+        });
+        return;
+      }
+
+      usersStore.put({
+        ...existing,
+        first_seen_at: (existing.first_seen_at && existing.first_seen_at < nowIso) ? existing.first_seen_at : nowIso,
+        last_seen_at: (existing.last_seen_at && existing.last_seen_at > nowIso) ? existing.last_seen_at : nowIso,
+        seen_count: (existing.seen_count || 0) + 1
+      });
+    };
+  }
+
   await new Promise((resolve, reject) => {
-    const tx = db.transaction(["posts", "captures"], "readwrite");
+    const tx = db.transaction(["posts", "captures", "users", "interactions"], "readwrite");
     const posts = tx.objectStore("posts");
     const caps = tx.objectStore("captures");
+    const users = tx.objectStore("users");
+    const interactions = tx.objectStore("interactions");
 
     for (const item of batch) {
       const post = item?.post;
       const capture = item?.capture;
       if (!post?.post_id || !capture?.post_id) continue;
+
+      const actor_handle = post.author_handle || capture.author_handle || null;
+      const nowIso = capture.captured_at || new Date().toISOString();
 
       const s = computeSentiment(post.text || "");
       post.sentiment_score = s.sentiment_score;
@@ -44,6 +74,19 @@ async function upsertBatch(batch) {
       capture.sentiment_label = s.sentiment_label;
 
       if (post.author_handle && !capture.author_handle) capture.author_handle = post.author_handle;
+
+      upsertUser(users, actor_handle, nowIso);
+
+      interactions.add({
+        post_id: post.post_id,
+        parent_post_id: capture.parent_post_id || null,
+        actor_handle,
+        interaction_type: capture.interaction_type || "post",
+        context: capture.context || null,
+        feed: capture.feed || null,
+        session_id: capture.session_id || null,
+        captured_at: nowIso
+      });
 
       const getReq = posts.get(post.post_id);
       getReq.onsuccess = () => {

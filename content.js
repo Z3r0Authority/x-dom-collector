@@ -32,6 +32,11 @@
     return "home_unknown";
   }
 
+  function getStatusRootPostId() {
+    const m = (location.pathname || "").match(/^\/[^/]+\/status\/(\d+)/);
+    return m ? m[1] : null;
+  }
+
   function extractFromArticle(article) {
     const statusLink = article.querySelector('a[href*="/status/"]');
     if (!statusLink) return null;
@@ -60,8 +65,16 @@
   function queueCapture(extracted) {
     const nowIso = new Date().toISOString();
     const context = getContext();
+    const statusRootPostId = (context === "status") ? getStatusRootPostId() : null;
     const feed = (context === "home") ? (detectHomeFeed() || "home_unknown") : null;
     const context_feed = feed ? `${context}:${feed}` : context;
+
+    const inferredInteractionType =
+      (context === "status" && statusRootPostId && extracted.post_id !== statusRootPostId)
+        ? "comment"
+        : "post";
+
+    const parent_post_id = (inferredInteractionType === "comment") ? statusRootPostId : null;
 
     const isFirstInSession = !seenThisSession.has(extracted.post_id);
     if (isFirstInSession) seenThisSession.add(extracted.post_id);
@@ -78,12 +91,15 @@
 
     const capture = {
       post_id: extracted.post_id,
+      author_handle: extracted.author_handle,
       captured_at: nowIso,
       context,
       feed,
       context_feed,
       session_id: sessionId,
-      is_first_in_session: isFirstInSession
+      is_first_in_session: isFirstInSession,
+      interaction_type: inferredInteractionType,
+      parent_post_id
     };
 
     buffer.push({ post, capture });
